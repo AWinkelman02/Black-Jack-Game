@@ -7,3 +7,5 @@
 //show cards
 
 //remove cards
+
+const BACK_CARD = "https://deckofcardsapi.com/static/img/back.png";
