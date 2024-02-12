@@ -42,13 +42,28 @@ body{
     backdrop-filter: blur(10px);
     border-radius: 10px;
     color: white;
-    padding: 3%;
+    padding: 2%;
     width: 20vw;
 }
 
 .gamebuttons{
     display: flex;
-
     justify-content: center;
     gap: 10px;
+    margin: 10px;
+}
+
+button{
+    font-family: "Montserrat", sans-serif;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.253);
+    padding: 10px;  
+    border-radius: 10px;
+    border: rgba(95, 95, 95, 0.514) 1px solid;
+    cursor: pointer;
+}
+
+button:hover{
+    background-color: rgba(0, 0, 0, 0.39);
+    border: rgba(95, 95, 95, 0.212) 1px solid;
 }
