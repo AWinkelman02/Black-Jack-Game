@@ -1,6 +1,7 @@
 import _, { forEach, get } from 'lodash';
 import './style.css';
 import { Player } from './player';
+import { removeCards, showCards, dealerCardHidden, showCardArea, showButtons, hideButtons, updateMessage, hideCardArea } from './components';
 
 document.addEventListener('DOMContentLoaded', () => {
   fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=6')
@@ -9,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const DEALER_DECISION_DELAY = 1500;
+const BACK_CARD = {image: "https://deckofcardsapi.com/static/img/back.png"}
 
 const startGameButton = document.getElementById('startgame');
 const hitButton = document.getElementById('hit');
@@ -30,15 +32,14 @@ function setDeck(deckData){
 
 startGameButton.addEventListener('click', () => {
   initializeGame();
+  hideButtons(startGameButton);
+  showButtons(hitButton, stayButton);
+  updateMessage("What would you like to do?");
 });
 
 //hit button listener
 hitButton.addEventListener('click', () => {
-  //hit button requests a new card
   hitMe();
-  //check score
-    //if under 21 allow for another hit
-    //if over 21, end game, bust
 });
 
 //stay button listener
@@ -49,8 +50,13 @@ stayButton.addEventListener('click', () => {
 
 //new game button listener
 newGameButton.addEventListener('click', () => {
-  //reset everything
-  //initializeGame();
+  resetPlayer(player);
+  resetPlayer(dealer);
+  hideCardArea();
+  initializeGame();
+  updateMessage("What would you like to do?");
+  hideButtons(newGameButton);
+  showButtons(hitButton, stayButton);
 });
 
 //setup player and dealer cards
@@ -63,32 +69,31 @@ async function initializeGame(){
   getScore(player);
   getScore(dealer);
 
-  console.log(player)
-    //show cards stored in arrays
-    //remove start game button
-    //place hit/stay buttons
+  removeCards(player.name)
+  removeCards(dealer.name)
+  showCards(player.name, player.cards)
+  dealerCardHidden(dealer.cards[0], BACK_CARD)
+  showCardArea();
 }
 
 //hit me
 async function hitMe(){
   await dealCard().then( result => {player.cards.push(result.cards[0])});
-  //check score
+  removeCards(player.name)
+  showCards(player.name, player.cards)
   getScore(player);
-  //console.log(playerCards);
-  console.log(player);
-  //check bust
   bustCheck(player);
 }
 
 async function stay(){
-  //let playerTurn = false;
   dealerTurn = true;
   await dealerStarts();
 }
 
 async function dealerStarts(){
-  console.log('Dealer Start');
-  //flip card
+  updateMessage('Dealer Starts');
+  removeCards(dealer.name)
+  showCards(dealer.name, dealer.cards)
   console.log(dealer.cards);
   while(dealerTurn){
     await gameDelay(DEALER_DECISION_DELAY);
@@ -96,12 +101,14 @@ async function dealerStarts(){
     console.log(dealer);
     if(dealer.highCount <= 16) {
       winCheck();
-      console.log('Dealer Draws')
+      updateMessage('Dealer Draws')
       await gameDelay(DEALER_DECISION_DELAY);
       await dealCard().then( result => {dealer.cards.push(result.cards[0])});
+      removeCards(dealer.name)
+      showCards(dealer.name, dealer.cards)
     } else if (dealer.highCount < 22){
       dealerTurn = false;
-      console.log('Dealer Stays')
+      updateMessage('Dealer Stays')
       await gameDelay(DEALER_DECISION_DELAY);
       winCheck();
       return
@@ -153,9 +160,10 @@ function getScore(person){
 function bustCheck(person){
   if( person.lowCount > 21 ){
     person.bust = true;
-    console.log(`${person.name} Busts`);
+    updateMessage(`${person.name} Busts`);
+    hideButtons(hitButton, stayButton);
+    showButtons(newGameButton);
   }
-  //after bust, show end game modal, lock interaction, show new game button
 }
 
 function setFinalScore(person){
@@ -164,21 +172,34 @@ function setFinalScore(person){
   } else {
     person.finalScore = person.highCount;
   }
-  console.log(person.finalScore);
 }
 
 function winCheck(){
   if (player.finalScore > dealer.highCount){
     if(dealerTurn === false){
-      console.log('Player Wins')
+      updateMessage('Player Wins')
+      hideButtons(hitButton, stayButton);
+      showButtons(newGameButton);
     }
   } else if (player.finalScore < dealer.highCount){
-    console.log('Dealer Wins')
+    updateMessage('Dealer Wins')
     dealerTurn = false;
+    hideButtons(hitButton, stayButton);
+    showButtons(newGameButton);
   } else {
     dealerTurn = false;
-    console.log('Push')
+    updateMessage('Push')
+    hideButtons(hitButton, stayButton);
+    showButtons(newGameButton);
   }
+}
+
+function resetPlayer(person){
+  person.cards.length = 0;
+  person.lowCount = 0;
+  person.highCount = 0;
+  person.finalScore = 0;
+  person.bust = false;
 }
 
 async function gameDelay(delay){
